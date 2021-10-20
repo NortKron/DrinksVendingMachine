@@ -1,0 +1,91 @@
+﻿@model Datas
+
+@{
+    ViewData["Title"] = "Drinks";
+}
+
+<div class="block-1">
+    <table border="1" width="100%" height="50%" >
+        <tbody>
+            <tr>
+                <td>
+                    <div id="display">
+                        @Html.Partial("_GetMessage")
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div align="center">
+                        @foreach (var coin in Model.Coins)
+                        {
+                            <form style="float: left"
+                                  data-ajax="true"
+                                  data-ajax-url="@Url.Action("DropCoin", "Home")"
+                                  data-ajax-update="#display">
+
+                                <input class="button-coin"
+                                       type="submit"
+                                       name="coin"
+                                       value="@coin.Coin"
+                                       @(coin.Allow ? "" : "disabled") />
+                            </form>
+                        }
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div align="center">
+                        <form data-ajax="true"
+                              data-ajax-url="@Url.Action("GetChange", "Home")"
+                              data-ajax-update="#display">
+                            <input type="submit"
+                                   value="Выдать сдачу"
+                                   class="btn btn-primary" />
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="block-2">
+    <p>Выберите напиток</p>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Code</th>
+                <th>Drinks</th>
+                <th>Cost</th>
+                <th>Count</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Drinks)
+            {
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Id)
+                    </td>
+                    <td>
+                        <form data-ajax="true" data-ajax-url="@Url.Action("Select", "Home")" data-ajax-update="#display">
+                            <button style="width:100px" name="id" value="@item.Id">@Html.DisplayFor(modelItem => item.Name)</button>
+                        </form>
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Cost)
+                    </td>
+                    <td>
+                        <div id="panel-count-@item.Id">
+                            @Html.DisplayFor(modelItem => item.Count)
+                            @ViewData["Count-" + @item.Id]
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
