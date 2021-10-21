@@ -4,20 +4,22 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
+using System.Diagnostics;
 using VendingMachineDrinks.Models;
 
 namespace VendingMachineDrinks.Controllers
 {
-    //[Route("admin")]
     public class AdminController : Controller
     {
         private readonly DataContext _context;
         private readonly ILogger<AdminController> _logger;
 
-        private const string key = "adminkey";
+        string _key = "123";
 
         public AdminController(DataContext context, ILogger<AdminController> logger)
         {
@@ -26,28 +28,18 @@ namespace VendingMachineDrinks.Controllers
         }
 
         // GET: Admin
-        //[Route("{key}")]
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Drinks.ToListAsync());
-        }
+            var drinks = await _context.Drinks.ToListAsync();
+            var coins = await _context.Coins.ToListAsync();
 
-        // GET: Admin/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
+            var model = new DataModel
             {
-                return NotFound();
-            }
+                Drinks = drinks,
+                Coins = coins
+            };
 
-            var drinks = await _context.Drinks
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (drinks == null)
-            {
-                return NotFound();
-            }
-
-            return View(drinks);
+            return View(model);
         }
 
         // GET: Admin/Create
@@ -157,6 +149,15 @@ namespace VendingMachineDrinks.Controllers
             return _context.Drinks.Any(e => e.Id == id);
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task Save(int id, [Bind("CoinId,Coin,Allow")] Coins coins)
+        {
+            _context.Update(coins);
+            await _context.SaveChangesAsync();
+        }
+
+        // Импорт напитков из файла JSON
         public void ImportDrinks()
         {
             // чтение файла

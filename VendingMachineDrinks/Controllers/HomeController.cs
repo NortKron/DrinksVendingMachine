@@ -7,8 +7,6 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-using System.Diagnostics;
-
 using VendingMachineDrinks.Models;
 
 namespace VendingMachineDrinks.Controllers
@@ -24,8 +22,6 @@ namespace VendingMachineDrinks.Controllers
         {
             _context = context;
             _logger = logger;
-
-            Debug.Print(">>>> start");
         }
 
         // GET: Main
@@ -37,12 +33,7 @@ namespace VendingMachineDrinks.Controllers
             @ViewBag.Text = "Внесите монеты";
             @ViewBag.Amount = amount;
 
-            foreach (var drink in drinks)
-            {
-                ViewData["Count-" + drink.Id] = drink.Count;
-            }
-
-            var model = new Datas 
+            var model = new DataModel
             { 
                 Drinks = drinks, 
                 Coins = coins
@@ -58,8 +49,6 @@ namespace VendingMachineDrinks.Controllers
 
         public IActionResult DropCoin(int coin)
         {
-            Debug.Print(">>>> coin = " + coin);
-
             if (coin == null)
             {
                 ViewBag.Text = "ID монеты неизвестен";
@@ -67,7 +56,7 @@ namespace VendingMachineDrinks.Controllers
                 return PartialView("_GetMessage", ViewBag);
             }
 
-            amount = amount + coin;
+            amount += coin;
             ViewBag.Text = "Внесите монеты";
             ViewBag.Amount = amount;
             return PartialView("_GetMessage", ViewBag);
@@ -75,13 +64,6 @@ namespace VendingMachineDrinks.Controllers
 
         public IActionResult Select(int? id)
         {
-            Debug.Print(">>>> drink id = " + id);
-
-            if (id == null)
-            {
-                return PartialView("");
-            }
-
             var drinks = _context.Drinks.FirstOrDefault(m => m.Id == id);
 
             if (drinks.Cost > amount)
@@ -99,7 +81,7 @@ namespace VendingMachineDrinks.Controllers
             }
             else
             {
-                amount = amount - drinks.Cost;
+                amount -= drinks.Cost;
                 
                 drinks.Count--;
                 ViewData["Count-" + drinks.Id] = drinks.Count;
@@ -115,7 +97,6 @@ namespace VendingMachineDrinks.Controllers
         public IActionResult GetChange()
         {
             amount = 0;
-            Debug.Print(">>>> Выдать сдачу");
 
             ViewBag.Text = "Сдача выдана";
             ViewBag.Amount = amount;

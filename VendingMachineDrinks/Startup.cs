@@ -10,7 +10,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-using System.Diagnostics;
 using VendingMachineDrinks.Models;
 
 namespace VendingMachineDrinks
@@ -34,7 +33,6 @@ namespace VendingMachineDrinks
 
             services.AddDbContext<DataContext>(options => options.UseSqlServer(
                 Configuration[CFG_DATA_DB].Replace("%CONTENTROOTPATH%", Environment.CurrentDirectory)) );
-            //services.AddDbContext<DataContext>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -54,35 +52,16 @@ namespace VendingMachineDrinks
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseRouting();
-            //app.UseAuthorization();
 
-            app.UseStatusCodePages();
-            //app.UseStatusCodePagesWithRedirects("/");
+            app.UseStatusCodePagesWithRedirects("/");
 
             app.UseEndpoints(endpoints =>
             {
+                
                 endpoints.MapControllerRoute
                 (
-                    name: "default",
-                    pattern: "{controller=Home}/{action=Index}/{id?}"
-                );
-                /*
-                endpoints.MapControllerRoute
-                (
-                    name: "default",
-                    pattern: "",
-                    defaults: new
-                    {
-                        controller = "Home",
-                        //controller = "Coins",
-                        action = "Index"
-                    }
-                );
-                /*
-                endpoints.MapControllerRoute
-                (
-                    name: "default",
-                    pattern: Configuration[CFG_ADMIN_ACCESSKEY],
+                    name: "Admin",
+                    pattern: Configuration[CFG_ADMIN_ACCESSKEY] + "/{action=Index}/{id?}",
                     defaults: new
                     {
                         controller = "Admin",
@@ -92,15 +71,9 @@ namespace VendingMachineDrinks
                 
                 endpoints.MapControllerRoute
                 (
-                    name: "default",
-                    pattern: Configuration[CFG_ADMIN_ACCESSKEY] + "/{action=Index}/{id?}",
-                    defaults: new
-                    {
-                        controller = "Admin",
-                        action = "Index"
-                    }
-                );
-                */
+                    name: "Home",
+                    pattern: "{controller=Home}/{action=Index}/{id?}"
+                );              
             });
         }
     }
