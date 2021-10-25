@@ -43,6 +43,22 @@
     }
 </script>
 
+<script type="text/javascript">
+	 jQuery(function($) {
+	 	$('#update-container').click(function(e) {
+	 		e.preventDefault();
+
+	 		$.ajax({
+	 			url: '@Url.Action("Index", "Home")',
+	 			success: function(data) {
+	 				$('#container').html(data);
+	 			}
+	 		});
+	 	})
+	 })
+</script>
+
+
 <div class="block-1">
     <table border="1" width="100%">
         <tbody>

@@ -11,7 +11,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Mvc;
 
-using System.Diagnostics;
 using VendingMachineDrinks.Models;
 using VendingMachineDrinks.Controllers;
 
@@ -71,7 +70,6 @@ namespace VendingMachineDrinks
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseRouting();
-            //app.UseAuthorization();
 
             //app.UseStatusCodePages();
             app.UseStatusCodePagesWithRedirects("/");

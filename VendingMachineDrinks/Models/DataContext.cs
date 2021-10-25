@@ -41,7 +41,6 @@ namespace VendingMachineDrinks.Models
 
     public class DataContext : DbContext
     {
-        //public DbSet<CreditApplications> CreditApplications { get; set; }
         public DbSet<Drinks> Drinks { get; set; }
         public DbSet<Coins> Coins { get; set; }
 

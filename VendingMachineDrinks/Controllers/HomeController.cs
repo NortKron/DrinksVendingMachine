@@ -7,8 +7,6 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-using System.Diagnostics;
-
 using VendingMachineDrinks.Models;
 
 namespace VendingMachineDrinks.Controllers
@@ -24,8 +22,6 @@ namespace VendingMachineDrinks.Controllers
         {
             _context = context;
             _logger = logger;
-
-            Debug.Print(">>>> start");
         }
 
         // GET: Main
