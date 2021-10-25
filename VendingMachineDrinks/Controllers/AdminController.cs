@@ -4,53 +4,63 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
+using System.Diagnostics;
 using VendingMachineDrinks.Models;
 
 namespace VendingMachineDrinks.Controllers
 {
-    //[Route("admin")]
+    public class AppSettings
+    {
+        public string Token { get; set; }
+    }
+
+    public class MyControllerAttribute : Attribute, IRouteTemplateProvider
+    {
+        public string Template => "adminkey123/";
+        public int? Order => 0;
+        public string Name { get; set; }
+    }
+
+    //[MyController]
     public class AdminController : Controller
     {
         private readonly DataContext _context;
         private readonly ILogger<AdminController> _logger;
 
-        private const string key = "adminkey";
+        string _key = "123";
 
-        public AdminController(DataContext context, ILogger<AdminController> logger)
+        public AdminController(DataContext context, ILogger<AdminController> logger, IOptions<AppSettings> settings)
         {
             _context = context;
             _logger = logger;
+
+            _key = settings.Value.Token;
+            Debug.Print(">>>> admin key : " + _key);
         }
 
         // GET: Admin
-        //[Route("{key}")]
+        //[HttpGet("")]
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Drinks.ToListAsync());
-        }
+            var drinks = await _context.Drinks.ToListAsync();
+            var coins = await _context.Coins.ToListAsync();
 
-        // GET: Admin/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
+            var model = new DataModel
             {
-                return NotFound();
-            }
+                Drinks = drinks,
+                Coins = coins
+            };
 
-            var drinks = await _context.Drinks
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (drinks == null)
-            {
-                return NotFound();
-            }
-
-            return View(drinks);
+            return View(model);
         }
 
         // GET: Admin/Create
+        //[HttpGet("Create")]
         public IActionResult Create()
         {
             return View();
@@ -60,6 +70,7 @@ namespace VendingMachineDrinks.Controllers
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
+        //[HttpPost("Create")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Name,Cost,Count")] Drinks drinks)
         {
@@ -73,6 +84,7 @@ namespace VendingMachineDrinks.Controllers
         }
 
         // GET: Admin/Edit/5
+        //[HttpGet("Edit/{id}")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -92,6 +104,7 @@ namespace VendingMachineDrinks.Controllers
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
+        //[HttpPost("Edit/{id}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Cost,Count")] Drinks drinks)
         {
@@ -124,6 +137,7 @@ namespace VendingMachineDrinks.Controllers
         }
 
         // GET: Admin/Delete/5
+        //[HttpGet("Delete/{id}")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -143,6 +157,7 @@ namespace VendingMachineDrinks.Controllers
 
         // POST: Admin/Delete/5
         [HttpPost, ActionName("Delete")]
+        //[HttpPost("Delete/{id}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
@@ -157,6 +172,19 @@ namespace VendingMachineDrinks.Controllers
             return _context.Drinks.Any(e => e.Id == id);
         }
 
+        [HttpPost]
+        //[HttpPost("Save/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task Save([Bind("CoinId,Coin,Allow")] Coins coins)
+        {
+            _context.Update(coins);
+            await _context.SaveChangesAsync();
+
+            //return View("Index");
+        }
+
+        // Импорт напитков из файла JSON
+        //[HttpPost("Import/{file}")]
         public void ImportDrinks()
         {
             // чтение файла

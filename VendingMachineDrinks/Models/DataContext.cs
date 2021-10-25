@@ -33,7 +33,7 @@ namespace VendingMachineDrinks.Models
 
     }
 
-    public class Datas
+    public class DataModel
     {
         public IEnumerable<Drinks> Drinks { get; set; }
         public IEnumerable<Coins> Coins { get; set; }

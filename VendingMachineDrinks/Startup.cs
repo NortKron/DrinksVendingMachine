@@ -9,9 +9,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Mvc;
 
 using System.Diagnostics;
 using VendingMachineDrinks.Models;
+using VendingMachineDrinks.Controllers;
 
 namespace VendingMachineDrinks
 {
@@ -19,13 +21,19 @@ namespace VendingMachineDrinks
     {
         private const string CFG_DATA_DB = @"ConnectionStrings:DefaultConnection";
         private const string CFG_ADMIN_ACCESSKEY = @"AdminKeyAccess";
+        
+        public IConfiguration Configuration { get; }
 
         public Startup(IConfiguration configuration)
         {
+            /*
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(env.ContentRootPath)
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+            */
+            //Configuration = builder.Build();
             Configuration = configuration;
         }
-
-        public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -35,6 +43,15 @@ namespace VendingMachineDrinks
             services.AddDbContext<DataContext>(options => options.UseSqlServer(
                 Configuration[CFG_DATA_DB].Replace("%CONTENTROOTPATH%", Environment.CurrentDirectory)) );
             //services.AddDbContext<DataContext>();
+
+            services.Configure<MvcOptions>(options =>
+            {
+                //mvc options
+            });
+
+            //Debug.Print(">>>> admin key : " + Configuration.GetSection(CFG_ADMIN_ACCESSKEY).Value);
+            services.Configure<AppSettings>(Configuration.GetSection(CFG_ADMIN_ACCESSKEY));
+            //services.Configure<AppSettings>(Configuration[CFG_ADMIN_ACCESSKEY]);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -56,14 +73,26 @@ namespace VendingMachineDrinks
             app.UseRouting();
             //app.UseAuthorization();
 
-            app.UseStatusCodePages();
-            //app.UseStatusCodePagesWithRedirects("/");
+            //app.UseStatusCodePages();
+            app.UseStatusCodePagesWithRedirects("/");
 
             app.UseEndpoints(endpoints =>
             {
+                
                 endpoints.MapControllerRoute
                 (
-                    name: "default",
+                    name: "Admin",
+                    pattern: Configuration[CFG_ADMIN_ACCESSKEY] + "/{action=Index}/{id?}",
+                    defaults: new
+                    {
+                        controller = "Admin",
+                        action = "Index"
+                    }
+                );
+                
+                endpoints.MapControllerRoute
+                (
+                    name: "Home",
                     pattern: "{controller=Home}/{action=Index}/{id?}"
                 );
                 /*
@@ -74,33 +103,10 @@ namespace VendingMachineDrinks
                     defaults: new
                     {
                         controller = "Home",
-                        //controller = "Coins",
                         action = "Index"
                     }
                 );
-                /*
-                endpoints.MapControllerRoute
-                (
-                    name: "default",
-                    pattern: Configuration[CFG_ADMIN_ACCESSKEY],
-                    defaults: new
-                    {
-                        controller = "Admin",
-                        action = "Index"
-                    }
-                );
-                
-                endpoints.MapControllerRoute
-                (
-                    name: "default",
-                    pattern: Configuration[CFG_ADMIN_ACCESSKEY] + "/{action=Index}/{id?}",
-                    defaults: new
-                    {
-                        controller = "Admin",
-                        action = "Index"
-                    }
-                );
-                */
+                */                
             });
         }
     }

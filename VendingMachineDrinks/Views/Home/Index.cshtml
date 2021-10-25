@@ -1,49 +1,93 @@
-﻿@model Datas
+﻿@model DataModel
 
 @{
-    ViewData["Title"] = "Drinks";
+    ViewData["Title"] = "Drinks";    
 }
 
+<script type="text/javascript">
+    function DropCoin(data)
+    {
+        $("#display").text(data["Message"]);
+        $("#amount").text(data["Amount"]);
+        DisableButton(data);
+    }
+
+    function Success(data)
+    {
+        $("#display").text(data["Message"]);
+        $("#amount").text(data["Amount"]);
+        $("#" + data["Drink-Id"] + "-count").text(data["Drink-Count"]);
+        DisableButton(data);
+    }
+
+    function GetChange(data)
+    {
+        $("#display").text(data["Message"]);
+        $("#amount").text(data["Amount"]);
+        DisableButton(data);
+    }
+
+    function DisableButton(data)
+    {
+        //console.log(data);
+
+        var indexes = data["indexes"];
+        var btnEnabled = data["enabled"];
+
+        for (let i = 0; i < indexes.length; i++)
+        {
+            console.log("index " + i + " = " + indexes[i]);
+            console.log("enabled " + i + " = " + btnEnabled[i]);
+            document.getElementById(indexes[i]).disabled = btnEnabled[i];
+        }        
+    }
+</script>
+
 <div class="block-1">
-    <table border="1" width="100%" height="50%" >
+    <table border="1" width="100%">
         <tbody>
             <tr>
                 <td>
-                    <div id="display">
-                        @Html.Partial("_GetMessage")
-                    </div>
+                    <div id="display" align="center">@ViewData["Message"]</div>
                 </td>
             </tr>
             <tr>
                 <td>
-                    <div align="center">
-                        @foreach (var coin in Model.Coins)
-                        {
-                            <form style="float: left"
-                                  data-ajax="true"
-                                  data-ajax-url="@Url.Action("DropCoin", "Home")"
-                                  data-ajax-update="#display">
-
-                                <input class="button-coin"
-                                       type="submit"
-                                       name="coin"
-                                       value="@coin.Coin"
-                                       @(coin.Allow ? "" : "disabled") />
-                            </form>
-                        }
-                    </div>
+                    <div id="amount" align="center">@ViewData["Amount"]</div>
                 </td>
+            </tr>
+            <tr>
+                <td>
+                    @foreach (var coin in Model.Coins)
+                    {
+                    <div>
+                        <form style="float: left" 
+                              data-ajax="true"
+                              data-ajax-url="@Url.Action("DropCoin", "Home")"
+                              data-ajax-success="DropCoin">
+                            <input class="button-coin"
+                                   type="submit"
+                                   name="coin"
+                                   value="@coin.Coin"
+                                   @(coin.Allow ? "" : "disabled") />
+                        </form>
+                    </div>
+                    }
+                    </td>
             </tr>
             <tr>
                 <td>
                     <div align="center">
                         <form data-ajax="true"
                               data-ajax-url="@Url.Action("GetChange", "Home")"
-                              data-ajax-update="#display">
+                              data-ajax-update="#display"
+                              data-ajax-success="GetChange">
                             <input type="submit"
                                    value="Выдать сдачу"
                                    class="btn btn-primary" />
                         </form>
+
+                        <div id="change" align="center"></div>
                     </div>
                 </td>
             </tr>
@@ -57,10 +101,9 @@
     <table class="table">
         <thead>
             <tr>
-                <th>Code</th>
-                <th>Drinks</th>
-                <th>Cost</th>
-                <th>Count</th>
+                <th>Напиток</th>
+                <th>Цена</th>
+                <th>Количество</th>
             </tr>
         </thead>
         <tbody>
@@ -68,21 +111,19 @@
             {
                 <tr>
                     <td>
-                        @Html.DisplayFor(modelItem => item.Id)
-                    </td>
-                    <td>
-                        <form data-ajax="true" data-ajax-url="@Url.Action("Select", "Home")" data-ajax-update="#display">
-                            <button style="width:100px" name="id" value="@item.Id">@Html.DisplayFor(modelItem => item.Name)</button>
+                        <form data-ajax="true" 
+                              data-ajax-url="@Url.Action("Select", "Home")" 
+                              data-ajax-success="Success" >
+                            <button style="width:100px" name="id" value="@item.Id" id="drink-@item.Id"
+                                @(item.Count > 0 && item.Cost <= int.Parse(ViewData["Amount"].ToString()) ? "" : "disabled")>
+                                @Html.DisplayFor(modelItem => item.Name)</button>
                         </form>
                     </td>
                     <td>
                         @Html.DisplayFor(modelItem => item.Cost)
                     </td>
                     <td>
-                        <div id="panel-count-@item.Id">
-                            @Html.DisplayFor(modelItem => item.Count)
-                            @ViewData["Count-" + @item.Id]
-                        </div>
+                        <div id="drink-@item.Id-count">@Html.DisplayFor(modelItem => item.Count)</div>
                     </td>
                 </tr>
             }

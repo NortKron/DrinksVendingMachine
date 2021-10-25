@@ -34,93 +34,76 @@ namespace VendingMachineDrinks.Controllers
             var drinks = _context.Drinks.ToList();
             var coins = _context.Coins.ToList();
 
-            @ViewBag.Text = "Внесите монеты";
-            @ViewBag.Amount = amount;
+            ViewData["Message"] = "Внесите монеты";
+            ViewData["Amount"] = amount;
+            DrinksEnabled();
 
-            foreach (var drink in drinks)
-            {
-                ViewData["Count-" + drink.Id] = drink.Count;
-            }
-
-            var model = new Datas 
+            var model = new DataModel
             { 
                 Drinks = drinks, 
                 Coins = coins
             };
-            
+
+            Debug.Print(">>>> " + ViewData["Amount"]);
+
             return View(model);
         }
 
-        private bool DrinksExists(int id)
+        private void DrinksEnabled()
         {
-            return _context.Drinks.Any(e => e.Id == id);
-        }
+            var listIndx = new List<string>();
+            var listVal = new List<bool>();
 
-        public IActionResult DropCoin(int coin)
-        {
-            Debug.Print(">>>> coin = " + coin);
-
-            if (coin == null)
+            foreach (var drink in _context.Drinks)
             {
-                ViewBag.Text = "ID монеты неизвестен";
-                ViewBag.Amount = amount;
-                return PartialView("_GetMessage", ViewBag);
+                listIndx.Add("drink-" + drink.Id);
+                listVal.Add( (drink.Count == 0 || drink.Cost > amount) );
             }
 
-            amount = amount + coin;
-            ViewBag.Text = "Внесите монеты";
-            ViewBag.Amount = amount;
-            return PartialView("_GetMessage", ViewBag);
+            ViewData["indexes"] = listIndx;
+            ViewData["enabled"] = listVal;
         }
 
-        public IActionResult Select(int? id)
+        public Object DropCoin(int coin)
         {
-            Debug.Print(">>>> drink id = " + id);
+            amount += coin;
+            ViewData["Amount"] = amount;
+            DrinksEnabled();
 
-            if (id == null)
-            {
-                return PartialView("");
-            }
+            return ViewData;
+        }
 
+        //public IActionResult Select(int? id)
+        public Object Select(int? id)
+        {
             var drinks = _context.Drinks.FirstOrDefault(m => m.Id == id);
+            
+            amount -= drinks.Cost;                
+            drinks.Count--;
 
-            if (drinks.Cost > amount)
-            {
-                ViewBag.Text = "Недостаточная сумма. Внесите ещё монеты";
-                ViewBag.Amount = amount;
-                return PartialView("_GetMessage", ViewBag);
-            }
+            ViewData["Drink-Id"] = "drink-" + drinks.Id;
+            ViewData["Drink-Count"] = drinks.Count;
+            ViewData["Message"] = "Напиток приготовлен";
+            ViewData["Amount"] = amount;
 
-            if (drinks.Count == 0)
-            {
-                ViewBag.Text = "Напиток закончился. Выберите другой";
-                ViewBag.Amount = amount;
-                return PartialView("_GetMessage", ViewBag);
-            }
-            else
-            {
-                amount = amount - drinks.Cost;
-                
-                drinks.Count--;
-                ViewData["Count-" + drinks.Id] = drinks.Count;
+            _context.SaveChanges();
 
-                _context.SaveChanges();
-
-                ViewBag.Text = "Напиток приготовлен";
-                ViewBag.Amount = amount;
-                return PartialView("_GetMessage", ViewBag);
-            }
+            DrinksEnabled();
+            //return PartialView("_GetMessage", ViewBag);
+            return ViewData;
         }
 
-        public IActionResult GetChange()
+        public Object GetChange()
         {
             amount = 0;
-            Debug.Print(">>>> Выдать сдачу");
+            //Debug.Print(">>>> Выдать сдачу");
 
-            ViewBag.Text = "Сдача выдана";
-            ViewBag.Amount = amount;
-            
-            return PartialView("_GetMessage", ViewBag);
+            ViewData["Message"] = "Сдача выдана";
+            ViewData["Amount"] = amount;
+            DrinksEnabled();
+
+            //return PartialView("_GetMessage", ViewBag);
+            return ViewData;
         }
     }
 }
