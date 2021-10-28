@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using VendingMachineDrinks.Models;
@@ -67,7 +65,6 @@ namespace VendingMachineDrinks.Controllers
             return ViewData;
         }
 
-        //public IActionResult Select(int? id)
         public Object Select(int? id)
         {
             var drinks = _context.Drinks.FirstOrDefault(m => m.Id == id);
@@ -83,16 +80,15 @@ namespace VendingMachineDrinks.Controllers
             _context.SaveChanges();
 
             DrinksEnabled();
-            //return PartialView("_GetMessage", ViewBag);
             return ViewData;
         }
 
         public Object GetChange()
         {
-            //Рассчитать монеты для выдачи сдачи
             string resultString = ""; ;
             int amountTemp = amount;
 
+            #region Рассчитать монеты для выдачи сдачи
             while (true)
             {
                 if (amountTemp == 0)
@@ -128,6 +124,7 @@ namespace VendingMachineDrinks.Controllers
                     }
                 }
             }
+            #endregion
 
             amount = 0;
 

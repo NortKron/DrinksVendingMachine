@@ -6,11 +6,8 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 
-using VendingMachineDrinks.Models;
-
 namespace VendingMachineDrinks.Models
 {
-    // ...
     public class Drinks
     {
         [Key]

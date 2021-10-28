@@ -11,46 +11,40 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
-using System.Diagnostics;
 using VendingMachineDrinks.Models;
 
 namespace VendingMachineDrinks.Controllers
 {
     public class AppSettings
     {
-        public string Token { get; set; }
+        public string AdminKeyAccess { get; set; }
     }
 
-    public class MyControllerAttribute : Attribute, IRouteTemplateProvider
-    {
-        public string Template => "adminkey123/";
-        public int? Order => 0;
-        public string Name { get; set; }
-    }
-
-    //[MyController]
     public class AdminController : Controller
     {
         private readonly DataContext _context;
         private readonly ILogger<AdminController> _logger;
 
-        string _key = "123";
+        string _key = "adminkey";
 
         public AdminController(DataContext context, ILogger<AdminController> logger, IOptions<AppSettings> settings)
         {
             _context = context;
             _logger = logger;
 
-            _key = settings.Value.Token;
-            //Debug.Print(">>>> admin key : " + _key);
+            _key = settings.Value.AdminKeyAccess;
         }
 
         // GET: Admin
         //[HttpGet("")]
-        public IActionResult Index()
+        public IActionResult Index(string? key)
         {
+            if (_key != key || key == null)
+            {
+                return View("No_access");
+            }
+
             var drinks = _context.Drinks.ToList();
             var coins = _context.Coins.ToList();
 
@@ -65,10 +59,7 @@ namespace VendingMachineDrinks.Controllers
 
         // GET: Admin/Create
         //[HttpGet("Create")]
-        public IActionResult Create()
-        {
-            return View();
-        }
+        public IActionResult Create() => View();
 
         // POST: Admin/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
@@ -87,6 +78,7 @@ namespace VendingMachineDrinks.Controllers
             return View(drinks);
         }
 
+        //[HttpPost("Edit")]
         public Object Edit([Bind("Id,Name,Cost,Count")] Drinks drinks)
         {
             if (drinks.Name == null || drinks.Cost <= 0)
@@ -95,13 +87,6 @@ namespace VendingMachineDrinks.Controllers
             }
             else
             {
-                /*
-                //Debug.Print(">> ID = " + id);
-                Debug.Print(">> id = " + drinks.Id
-                    + "; Name = " + drinks.Name
-                    + "; Cost = " + drinks.Cost
-                    + "; Count = " + drinks.Count);
-                */
                 _context.Update(drinks);
                 _context.SaveChanges();
 
@@ -145,8 +130,7 @@ namespace VendingMachineDrinks.Controllers
             return _context.Drinks.Any(e => e.Id == id);
         }
 
-        //public Object Save([Bind("CoinId,Allow")] Coins coins)
-        //public Object Save(int[] CoinId, string[] Allow)
+        //[HttpPost("Save")]
         public Object Save(Dictionary<string, string> coinDic)
         {
             var coins = _context.Coins;
@@ -154,12 +138,7 @@ namespace VendingMachineDrinks.Controllers
             foreach(var coin in coins)
             {
                 coin.Allow = coinDic.ContainsKey("Coin-" + coin.CoinId.ToString());
-            }
-            
-            //Debug.Print(">> " + model.Count());
-            //Debug.Print(">> id = " + coins.CoinId
-            //+ "; Coin = " + coins.Coin
-                //+ "; Count = " + coins.Allow);                 
+            }          
 
             _context.SaveChanges();
 
@@ -181,7 +160,6 @@ namespace VendingMachineDrinks.Controllers
             }
             
             List<Drinks> drinksObjects = JsonConvert.DeserializeObject<List<Drinks>>(content);
-            //Debug.Print(">> Path : " + 11);            
             try
             {
                 drinksObjects = JsonConvert.DeserializeObject<List<Drinks>>(content);
