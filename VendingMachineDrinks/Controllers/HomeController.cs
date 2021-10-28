@@ -40,8 +40,6 @@ namespace VendingMachineDrinks.Controllers
                 Coins = coins
             };
 
-            Debug.Print(">>>> " + ViewData["Amount"]);
-
             return View(model);
         }
 
@@ -91,14 +89,53 @@ namespace VendingMachineDrinks.Controllers
 
         public Object GetChange()
         {
-            amount = 0;
-            //Debug.Print(">>>> Выдать сдачу");
+            //Рассчитать монеты для выдачи сдачи
+            string resultString = ""; ;
+            int amountTemp = amount;
 
+            while (true)
+            {
+                if (amountTemp == 0)
+                {
+                    resultString = resultString.Remove(resultString.Length - 1);
+                    break;
+                }
+
+                if (amountTemp - 10 >= 0)
+                {
+                    amountTemp -= 10;
+                    resultString += "10, ";
+                }
+                else
+                {
+                    if (amountTemp - 5 >= 0)
+                    {
+                        amountTemp -= 5;
+                        resultString += "5, ";
+                    }
+                    else
+                    {
+                        if (amountTemp - 2 >= 0)
+                        {
+                            amountTemp -= 2;
+                            resultString += "2, ";
+                        }
+                        else
+                        {
+                            amountTemp--;
+                            resultString += "1, ";
+                        }
+                    }
+                }
+            }
+
+            amount = 0;
+
+            ViewData["ListCoins"] = "Выданы монеты: " + resultString;
             ViewData["Message"] = "Сдача выдана";
             ViewData["Amount"] = amount;
             DrinksEnabled();
 
-            //return PartialView("_GetMessage", ViewBag);
             return ViewData;
         }
     }

@@ -1,13 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 using System.Diagnostics;
 using VendingMachineDrinks.Models;
@@ -40,15 +44,15 @@ namespace VendingMachineDrinks.Controllers
             _logger = logger;
 
             _key = settings.Value.Token;
-            Debug.Print(">>>> admin key : " + _key);
+            //Debug.Print(">>>> admin key : " + _key);
         }
 
         // GET: Admin
         //[HttpGet("")]
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
-            var drinks = await _context.Drinks.ToListAsync();
-            var coins = await _context.Coins.ToListAsync();
+            var drinks = _context.Drinks.ToList();
+            var coins = _context.Coins.ToList();
 
             var model = new DataModel
             {
@@ -72,81 +76,50 @@ namespace VendingMachineDrinks.Controllers
         [HttpPost]
         //[HttpPost("Create")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Cost,Count")] Drinks drinks)
+        public IActionResult Create([Bind("Id,Name,Cost,Count")] Drinks drinks)
         {
             if (ModelState.IsValid)
             {
                 _context.Add(drinks);
-                await _context.SaveChangesAsync();
+                _context.SaveChanges();
                 return RedirectToAction(nameof(Index));
             }
             return View(drinks);
         }
 
-        // GET: Admin/Edit/5
-        //[HttpGet("Edit/{id}")]
-        public async Task<IActionResult> Edit(int? id)
+        public Object Edit([Bind("Id,Name,Cost,Count")] Drinks drinks)
         {
-            if (id == null)
+            if (drinks.Name == null || drinks.Cost <= 0)
             {
-                return NotFound();
+                ViewData["Message"] = "Данные по напитку (название, цена) неверно заполнены";
             }
+            else
+            {
+                /*
+                //Debug.Print(">> ID = " + id);
+                Debug.Print(">> id = " + drinks.Id
+                    + "; Name = " + drinks.Name
+                    + "; Cost = " + drinks.Cost
+                    + "; Count = " + drinks.Count);
+                */
+                _context.Update(drinks);
+                _context.SaveChanges();
 
-            var drinks = await _context.Drinks.FindAsync(id);
-            if (drinks == null)
-            {
-                return NotFound();
+                ViewData["Message"] = "Данные по напиткам сохранены";
             }
-            return View(drinks);
-        }
-
-        // POST: Admin/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        //[HttpPost("Edit/{id}")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Cost,Count")] Drinks drinks)
-        {
-            if (id != drinks.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(drinks);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!DrinksExists(drinks.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(drinks);
+            return ViewData;
         }
 
         // GET: Admin/Delete/5
         //[HttpGet("Delete/{id}")]
-        public async Task<IActionResult> Delete(int? id)
+        public IActionResult Delete(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
 
-            var drinks = await _context.Drinks
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var drinks = _context.Drinks.FirstOrDefault(m => m.Id == id);
             if (drinks == null)
             {
                 return NotFound();
@@ -159,11 +132,11 @@ namespace VendingMachineDrinks.Controllers
         [HttpPost, ActionName("Delete")]
         //[HttpPost("Delete/{id}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public IActionResult DeleteConfirmed(int id)
         {
-            var drinks = await _context.Drinks.FindAsync(id);
+            var drinks = _context.Drinks.Find(id);
             _context.Drinks.Remove(drinks);
-            await _context.SaveChangesAsync();
+            _context.SaveChanges();
             return RedirectToAction(nameof(Index));
         }
 
@@ -172,33 +145,69 @@ namespace VendingMachineDrinks.Controllers
             return _context.Drinks.Any(e => e.Id == id);
         }
 
-        [HttpPost]
-        //[HttpPost("Save/{id}")]
-        [ValidateAntiForgeryToken]
-        public async Task Save([Bind("CoinId,Coin,Allow")] Coins coins)
+        //public Object Save([Bind("CoinId,Allow")] Coins coins)
+        //public Object Save(int[] CoinId, string[] Allow)
+        public Object Save(Dictionary<string, string> coinDic)
         {
-            _context.Update(coins);
-            await _context.SaveChangesAsync();
+            var coins = _context.Coins;
 
-            //return View("Index");
+            foreach(var coin in coins)
+            {
+                coin.Allow = coinDic.ContainsKey("Coin-" + coin.CoinId.ToString());
+            }
+            
+            //Debug.Print(">> " + model.Count());
+            //Debug.Print(">> id = " + coins.CoinId
+            //+ "; Coin = " + coins.Coin
+                //+ "; Count = " + coins.Allow);                 
+
+            _context.SaveChanges();
+
+            ViewData["Message"] = "Данные по монетам сохранены";
+
+            return ViewData;
         }
 
         // Импорт напитков из файла JSON
         //[HttpPost("Import/{file}")]
-        public void ImportDrinks()
+        [HttpPost]
+        public Object ImportDrinks(IFormFile file)
         {
-            // чтение файла
-            while (true)
+            var content = string.Empty;
+
+            using (var reader = new StreamReader(file.OpenReadStream()))
             {
-                var drinks = new Drinks
+                content = reader.ReadToEnd();
+            }
+            
+            List<Drinks> drinksObjects = JsonConvert.DeserializeObject<List<Drinks>>(content);
+            //Debug.Print(">> Path : " + 11);            
+            try
+            {
+                drinksObjects = JsonConvert.DeserializeObject<List<Drinks>>(content);
+            }
+            catch
+            {
+                ViewData["Message"] = "Не удалось загрузить данные из файла " + file.FileName;
+                return ViewData;
+            }
+
+            foreach (var drink in drinksObjects)
+            {
+
+                Drinks dnk = new Drinks
                 {
-                    Name = "",
-                    Cost = 0,
-                    Count = 0
+                    Name = drink.Name,
+                    Cost = drink.Cost,
+                    Count = drink.Count
                 };
 
+                _context.Drinks.Add(dnk);
                 _context.SaveChanges();
             }
+
+            ViewData["Message"] = "Данные импортированы. Всего добавлено напитков в БД : " + drinksObjects.Count();
+            return ViewData;
         }
     }
 }

@@ -4,6 +4,8 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+
 using VendingMachineDrinks.Models;
 
 namespace VendingMachineDrinks.Models
@@ -12,12 +14,14 @@ namespace VendingMachineDrinks.Models
     public class Drinks
     {
         [Key]
+        //[JsonProperty("Id")]
         public int Id { get; set; }
 
+        [JsonProperty("Name")]
         public string Name { get; set; }
-
+        [JsonProperty("Cost")]
         public int Cost { get; set; }
-
+        [JsonProperty("Count")]
         public int Count { get; set; }
 
     }

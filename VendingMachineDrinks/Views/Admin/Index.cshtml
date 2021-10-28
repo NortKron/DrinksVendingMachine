@@ -1,48 +1,31 @@
 ﻿@model DataModel
 
 @{
-    ViewData["Title"] = "Admin";
+    ViewData["Title"] = "Admin mode";
 }
 
 <script type="text/javascript">
-    function DropCoin(data) {
-        $("#display").text(data["Message"]);
-        $("#amount").text(data["Amount"]);
-        DisableButton(data);
-    }
-
-    function Success(data) {
-        $("#display").text(data["Message"]);
-        $("#amount").text(data["Amount"]);
-        $("#" + data["Drink-Id"] + "-count").text(data["Drink-Count"]);
-        DisableButton(data);
-    }
-
-    function GetChange(data) {
-        $("#display").text(data["Message"]);
-        $("#amount").text(data["Amount"]);
-        DisableButton(data);
-    }
-
-    function DisableButton(data) {
+    function UpdateCoins(data) {
         //console.log(data);
-
-        var indexes = data["indexes"];
-        var btnEnabled = data["enabled"];
-
-        for (let i = 0; i < indexes.length; i++) {
-            console.log("index " + i + " = " + indexes[i]);
-            console.log("enabled " + i + " = " + btnEnabled[i]);
-            document.getElementById(indexes[i]).disabled = btnEnabled[i];
-        }
+        alert(data["Message"]);
+    }
+    function UpdateDrinks(data) {
+        //console.log(data);
+        alert(data["Message"]);
+    }
+    function ImportSuccess(data) {
+        //console.log(data);
+        alert(data["Message"]);
     }
 </script>
 
 <h1>Режим администратора</h1>
 
-<form  asp-action="Save">
+<form data-ajax="true"
+      data-ajax-url="@Url.Action("Save")"
+      data-ajax-success="UpdateCoins">
     <p>
-        <a asp-action="Save">Сохранить изменения</a>
+        <button type="submit" value="Save" class="btn btn-primary">Сохранить изменения</button>
     </p>
     <table class="table">
         <thead>
@@ -57,13 +40,20 @@
             {
                 <tr>
                     <td>
-                        @Html.DisplayFor(modelItem => item.CoinId)
+                        <label>@item.CoinId</label>
+                        <input type="hidden" id="@item.CoinId" name="@item.CoinId" value="@item.CoinId" />
                     </td>
                     <td>
-                        @Html.DisplayFor(modelItem => item.Coin)
+                        <label>@item.Coin</label>
                     </td>
                     <td>
-                        @Html.EditorFor(modelItem => item.Allow)
+                        
+
+                        <input type="checkbox" class="check-box"
+                               id="@item.CoinId"
+                               name=@("coinDic[Coin-" + item.CoinId + "]")
+                               value="@(item.Allow ? "true" : "false")"
+                               @(item.Allow ? "checked" : "") />
                     </td>
                 </tr>
             }
@@ -74,6 +64,15 @@
 <p>
     <a asp-action="Create">Добавить напиток</a>
 </p>
+<form method="post" 
+      enctype="multipart/form-data"
+      data-ajax="true"
+      data-ajax-url="@Url.Action("ImportDrinks")"
+      data-ajax-success="ImportSuccess">
+    <label>Импортировать напитки из файла JSON</label>
+    <input type="file"  name="file" accept=".json" /><br />
+    <button type="submit" value="ImportDrinks" class="btn-primary">Импортировать</button>
+</form>
 <table class="table">
     <thead>
         <tr>
@@ -85,26 +84,46 @@
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model.Drinks) 
-{
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Id)
-            </td>
-            <td>
-                @Html.EditorFor(modelItem => item.Name)
-            </td>
-            <td>
-                @Html.EditorFor(modelItem => item.Cost)
-            </td>
-            <td>
-                @Html.EditorFor(modelItem => item.Count)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Сохранить изменения</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Удалить</a>
-            </td>
-        </tr>
-}
+        @foreach (var item in Model.Drinks)
+        {
+            <form data-ajax="true"
+                  data-ajax-url="@Url.Action("Edit")"
+                  data-ajax-success="UpdateDrinks">
+                <tr>
+                    <td>
+                        <label>@item.Id</label>
+                        <input type="hidden" name="Id" value="@item.Id" />
+                    </td>
+                    <td>
+                        <input class="text-box single-line"
+                               data-val="true"
+                               data-val-required="Укажите название"
+                               name="Name"
+                               type="text"
+                               value="@item.Name" />
+                    </td>
+                    <td>
+                        <input class="text-box single-line"
+                               data-val="true"
+                               data-val-required="Укажите цену"
+                               name="Cost"
+                               type="number"
+                               value="@item.Cost" />
+                    </td>
+                    <td>
+                        <input class="text-box single-line"
+                               data-val="true"
+                               data-val-required="Укажите количество"
+                               name="Count"
+                               type="number"
+                               value="@item.Count" />
+                    </td>
+                    <td>
+                        <button type="submit" value="Edit" class="btn btn-primary">Сохранить изменения</button> |
+                        <a asp-action="Delete" asp-route-id="@item.Id">Удалить</a>
+                    </td>
+                </tr>
+            </form>
+        }
     </tbody>
 </table>

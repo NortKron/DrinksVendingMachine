@@ -24,40 +24,25 @@
     {
         $("#display").text(data["Message"]);
         $("#amount").text(data["Amount"]);
+
+        $("#change").text(data["ListCoins"]);
         DisableButton(data);
     }
 
     function DisableButton(data)
     {
         //console.log(data);
-
         var indexes = data["indexes"];
         var btnEnabled = data["enabled"];
 
         for (let i = 0; i < indexes.length; i++)
         {
-            console.log("index " + i + " = " + indexes[i]);
-            console.log("enabled " + i + " = " + btnEnabled[i]);
+            //console.log("index " + i + " = " + indexes[i]);
+            //console.log("enabled " + i + " = " + btnEnabled[i]);
             document.getElementById(indexes[i]).disabled = btnEnabled[i];
         }        
     }
 </script>
-
-<script type="text/javascript">
-	 jQuery(function($) {
-	 	$('#update-container').click(function(e) {
-	 		e.preventDefault();
-
-	 		$.ajax({
-	 			url: '@Url.Action("Index", "Home")',
-	 			success: function(data) {
-	 				$('#container').html(data);
-	 			}
-	 		});
-	 	})
-	 })
-</script>
-
 
 <div class="block-1">
     <table border="1" width="100%">
@@ -74,8 +59,8 @@
             </tr>
             <tr>
                 <td>
-                    @foreach (var coin in Model.Coins)
-                    {
+                @foreach (var coin in Model.Coins)
+                {
                     <div>
                         <form style="float: left" 
                               data-ajax="true"
@@ -88,8 +73,8 @@
                                    @(coin.Allow ? "" : "disabled") />
                         </form>
                     </div>
-                    }
-                    </td>
+                 }
+                </td>
             </tr>
             <tr>
                 <td>
@@ -101,14 +86,14 @@
                             <input type="submit"
                                    value="Выдать сдачу"
                                    class="btn btn-primary" />
-                        </form>
-
-                        <div id="change" align="center"></div>
+                        </form>                        
                     </div>
                 </td>
             </tr>
         </tbody>
     </table>
+
+    <div id="change" align="center"></div>
 </div>
 
 <div class="block-2">
